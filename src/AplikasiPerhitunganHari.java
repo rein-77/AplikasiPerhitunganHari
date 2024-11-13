@@ -3,6 +3,15 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.temporal.ChronoUnit;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JSpinner;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
 /**
  *
  * @author Saputra
@@ -14,6 +23,30 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
      */
     public AplikasiPerhitunganHari() {
         initComponents();
+        // Menambahkan PropertyChangeListener untuk jCalendar1
+        jCalendar1.addPropertyChangeListener("calendar", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                // Memperbarui model spinTahun saat tanggal di jCalendar1 berubah
+                updateSpinTahun();
+            }
+        });
+        // Inisialisasi spinTahun pertama kali
+        updateSpinTahun();
+        // Mengatur editor spinTahun agar hanya menampilkan angka bulat
+        JSpinner.NumberEditor editor = new JSpinner.NumberEditor(spinTahun, "#");
+        spinTahun.setEditor(editor);
+    }
+
+    private void updateSpinTahun() {
+        // Mendapatkan tahun dari jCalendar1
+        int selectedYear = jCalendar1.getDate().toInstant()
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDate().getYear();
+        // Membuat model spinner dengan rentang tahun
+        int startYear = selectedYear - 10;
+        int endYear = selectedYear + 10;
+        spinTahun.setModel(new javax.swing.SpinnerNumberModel(selectedYear, startYear, endYear, 1));
     }
 
     /**
@@ -33,7 +66,7 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
         boxBulan = new javax.swing.JComboBox<>();
         spinTahun = new javax.swing.JSpinner();
         jLabel2 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        btnHasil = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         areaHasil = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
@@ -56,7 +89,7 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         jPanel1.add(jCalendar1, gridBagConstraints);
 
         boxBulan.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
@@ -84,16 +117,16 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LAST_LINE_START;
         jPanel1.add(jLabel2, gridBagConstraints);
 
-        jButton1.setText("Hitung!");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnHasil.setText("Hitung!");
+        btnHasil.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnHasilActionPerformed(evt);
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 4;
-        jPanel1.add(jButton1, gridBagConstraints);
+        jPanel1.add(btnHasil, gridBagConstraints);
 
         areaHasil.setColumns(20);
         areaHasil.setRows(5);
@@ -102,6 +135,7 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipady = 50;
         jPanel1.add(jScrollPane1, gridBagConstraints);
@@ -133,13 +167,71 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void spinTahunStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spinTahunStateChanged
-        // TODO add your handling code here:
-    }//GEN-LAST:event_spinTahunStateChanged
+    private void btnHasilActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHasilActionPerformed
+        // Mendapatkan tanggal awal dari jCalendar1
+        LocalDate dateAwal = jCalendar1.getDate().toInstant()
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDate();
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
+        // Mendapatkan bulan dan tahun dari input pengguna
+        int bulan = boxBulan.getSelectedIndex() + 1; // Indeks mulai dari 0
+        int tahun = (int) spinTahun.getValue();
+
+        // Membuat objek LocalDate dengan tanggal 1 di bulan dan tahun yang dipilih
+        LocalDate dateAkhir = LocalDate.of(tahun, bulan, 1);
+
+        // Menghitung jumlah hari antara dua tanggal
+        long jumlahHari = ChronoUnit.DAYS.between(dateAwal, dateAkhir);
+
+        // Mengecek apakah tahun kabisat
+        boolean isLeapYear = Year.isLeap(tahun);
+
+        // Mendapatkan hari pertama dan terakhir dalam bulan dateAkhir
+        LocalDate firstDayOfMonthAkhir = dateAkhir.withDayOfMonth(1);
+        LocalDate lastDayOfMonthAkhir = dateAkhir.withDayOfMonth(dateAkhir.lengthOfMonth());
+
+        // Mendapatkan hari pertama dan terakhir dalam bulan dateAwal
+        LocalDate firstDayOfMonthAwal = dateAwal.withDayOfMonth(1);
+        LocalDate lastDayOfMonthAwal = dateAwal.withDayOfMonth(dateAwal.lengthOfMonth());
+
+        // Formatter untuk menampilkan nama hari dalam bahasa Indonesia
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE", new Locale("id", "ID"));
+
+        String hariPertamaAwal = firstDayOfMonthAwal.format(formatter);
+        String hariTerakhirAwal = lastDayOfMonthAwal.format(formatter);
+
+        String hariPertamaAkhir = firstDayOfMonthAkhir.format(formatter);
+        String hariTerakhirAkhir = lastDayOfMonthAkhir.format(formatter);
+
+        // Menampilkan hasil pada areaHasil
+        areaHasil.setText(
+            "Tanggal Awal: " + dateAwal + "\n" +
+            "Hari pertama pada bulan " + dateAwal.getMonth() + " tahun " + dateAwal.getYear() + " adalah " +
+            hariPertamaAwal + ".\n" +
+            "Hari terakhir pada bulan " + dateAwal.getMonth() + " tahun " + dateAwal.getYear() + " adalah " +
+            hariTerakhirAwal + ".\n\n" +
+            "Tanggal Akhir: " + dateAkhir + "\n" +
+            "Hari pertama pada bulan " + boxBulan.getSelectedItem() + " tahun " + tahun + " adalah " +
+            hariPertamaAkhir + ".\n" +
+            "Hari terakhir pada bulan " + boxBulan.getSelectedItem() + " tahun " + tahun + " adalah " +
+            hariTerakhirAkhir + ".\n\n" +
+            "Jumlah hari antara " + dateAwal + " dan " + dateAkhir + " adalah " +
+            Math.abs(jumlahHari) + " hari.\n" +
+            "Tahun " + tahun + (isLeapYear ? " adalah " : " bukan ") + "tahun kabisat."
+        );
+    }//GEN-LAST:event_btnHasilActionPerformed
+
+    private void spinTahunStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spinTahunStateChanged
+        // Mendapatkan nilai tahun yang baru dari spinTahun
+        int tahun = (int) spinTahun.getValue();
+
+        // Membersihkan area hasil
+        areaHasil.setText("");
+
+        // Jika diperlukan, perbarui komponen atau lakukan perhitungan otomatis
+        // Contoh: Memanggil metode perhitungan otomatis
+        // hitungSelisihHari();
+    }//GEN-LAST:event_spinTahunStateChanged
 
     /**
      * @param args the command line arguments
@@ -179,7 +271,7 @@ public class AplikasiPerhitunganHari extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea areaHasil;
     private javax.swing.JComboBox<String> boxBulan;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton btnHasil;
     private com.toedter.calendar.JCalendar jCalendar1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
